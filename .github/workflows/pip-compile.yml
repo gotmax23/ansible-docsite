@@ -1,0 +1,74 @@
+---
+name: "Refresh pinned dependencies"
+"on":
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - devel
+    paths:
+      - .github/workflows/pip-compile.yml
+      - "tests/*.in"
+permissions:
+  pull-requests: write
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: "devel"
+      - name: Graft ansible-core
+        run: |
+          python docs/bin/clone-core.py
+      - name: Setup nox
+        uses: wntrblm/nox@2023.04.22
+        with:
+          python-versions: "3.9"
+      - name: Determine branch
+        id: branch
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          if git branch -r | grep origin/pip-compile; then
+            echo "branch-exists=true" >> "${GITHUB_OUTPUT}"
+            git switch pip-compile
+            git rebase devel
+          else
+            echo "branch-exists=false" >> "${GITHUB_OUTPUT}"
+            git switch -c pip-compile
+          fi
+      - name: "Run nox -e pip-compile"
+        env:
+          # Ensure the latest pip version is used
+          VIRTUALENV_DOWNLOAD: '1'
+        run: |
+          nox -e pip-compile
+      - name: Push and create
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          message: "ci: refresh pinned dependencies"
+        run: |
+          git diff || :
+          git add tests/*.txt
+          if git diff-index --quiet HEAD requirements/*.txt; then
+            echo "Nothing to do!"
+            exit
+          fi
+
+          git commit -m "${message}"
+          git push --force-with-lease origin pip-compile
+          if [ "${{ steps.branch.outputs.branch-exists }}" = "false" ] \
+            || gh pr list -l dependency_update -B devel |& grep "no pull requests match your search in"
+          then
+            gh pr create \
+              --base "devel" \
+              --title "${message}" \
+              --body "" \
+              --label dependency_update
+          fi
