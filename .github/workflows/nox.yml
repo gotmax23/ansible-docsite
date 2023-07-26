@@ -1,0 +1,44 @@
+---
+name: nox
+"on":
+  push:
+    branches-ignore:
+      - 'patchback/**'
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  nox:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - session: static
+            python-versions: "3.11"
+            packages: ""
+          - session: formatters_check
+            python-versions: "3.11"
+            packages: ""
+          - session: typing
+            python-versions: "3.11"
+            packages: ""
+
+    name: "Run nox ${{ matrix.session }} session"
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Install extra packages
+        if: "matrix.packages != ''"
+        run: |
+          sudo apt-get install -y ${{ matrix.packages }}
+      - name: Setup nox
+        uses: wntrblm/nox@2023.04.22
+        with:
+          python-versions: "${{ matrix.python-versions }}"
+      - name: "Run nox -e ${{ matrix.session }}"
+        run: |
+          nox -e "${{ matrix.session }}"
