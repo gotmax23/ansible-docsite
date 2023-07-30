@@ -38,7 +38,7 @@ nox==2023.4.22
     # via -r requirements/typing.in
 packaging==23.1
     # via nox
-platformdirs==3.9.1
+platformdirs==3.10.0
     # via virtualenv
 pycparser==2.21
     # via cffi
