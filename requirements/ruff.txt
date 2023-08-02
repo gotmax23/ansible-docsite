@@ -4,5 +4,5 @@
 #
 #    pip-compile --allow-unsafe --config=pyproject.toml --output-file=requirements/ruff.txt --strip-extras requirements/ruff.in
 #
-ruff==0.0.281
+ruff==0.0.282
     # via -r requirements/ruff.in
