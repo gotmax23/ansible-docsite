@@ -42,7 +42,7 @@ platformdirs==3.10.0
     # via virtualenv
 pycparser==2.21
     # via cffi
-pygithub==1.59.0
+pygithub==1.59.1
     # via -r requirements/../hacking/pr_labeler/requirements.txt
 pyjwt==2.8.0
     # via pygithub
