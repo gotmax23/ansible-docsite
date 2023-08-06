@@ -3,6 +3,3 @@
 # by the following command:
 #
 #    pip-compile --allow-unsafe --config=pyproject.toml --output-file=tests/static.txt --strip-extras tests/static.in
-#
-ruff==0.0.282
-    # via -r tests/static.in
