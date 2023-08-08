@@ -56,7 +56,7 @@ jobs:
         run: |
           git diff || :
           git add tests/*.txt
-          if git diff-index --quiet HEAD requirements/*.txt; then
+          if git diff-index --quiet HEAD tests/*.txt; then
             echo "Nothing to do!"
             exit
           fi
