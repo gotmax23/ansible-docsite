@@ -55,3 +55,6 @@ jobs:
     - name: Run rstcheck Sanity
       run: |
         python tests/sanity.py rstcheck
+
+  nox:
+    uses: ./.github/workflows/reusable-nox.yml
