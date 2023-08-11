@@ -26,7 +26,7 @@ antsibull-docs==2.3.1
     #   -r tests/requirements.in
 antsibull-docs-parser==1.0.0
     # via antsibull-docs
-async-timeout==4.0.2
+async-timeout==4.0.3
     # via aiohttp
 asyncio-pool==0.6.0
     # via antsibull-docs
