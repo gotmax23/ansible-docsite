@@ -3,7 +3,9 @@ name: "Refresh pinned dependencies"
 
 "on":
   workflow_call:
-    inputs: &inputs
+    # GHA does not support anchors :(
+    # inputs: &inputs
+    inputs:
       # Commit messae and PR title
       message:
         type: string
@@ -25,7 +27,23 @@ name: "Refresh pinned dependencies"
         type: string
         required: true
   workflow_dispatch:
-    inputs: *inputs
+    # inputs: *inputs
+    inputs:
+      message:
+        type: string
+        required: true
+      pr-branch:
+        type: string
+        required: true
+      base-branch:
+        type: string
+        required: true
+      nox-args:
+        type: string
+        required: true
+      changed-files:
+        type: string
+        required: true
 
 permissions:
   pull-requests: write
@@ -60,7 +78,7 @@ jobs:
             git rebase "${{ inputs.base-branch }}"
           else
             echo "branch-exists=false" >> "${GITHUB_OUTPUT}"
-            git switch -c pip-compile
+            git switch -c "${{ inputs.pr-branch }}"
           fi
       - name: "Run nox ${{ inputs.nox-args }}"
         env:
@@ -72,6 +90,7 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
+          set -x
           git diff || :
           git add ${{ inputs.changed-files }}
           if git diff-index --quiet HEAD ${{ inputs.changed-files }}; then
@@ -80,7 +99,7 @@ jobs:
           fi
 
           git commit -m "${{ inputs.message }}"
-          git push --force-with-lease origin "${{ inputs.pr-branch }}"
+          git push --force origin "${{ inputs.pr-branch }}"
           if [ "${{ steps.branch.outputs.branch-exists }}" = "false" ]
           then
             gh pr create \

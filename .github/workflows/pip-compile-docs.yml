@@ -12,13 +12,25 @@ name: "Refresh docs build dependencies"
       pr-branch:
         required: false
         type: string
+  push:
+    branches:
+      - devel
+    paths:
+      - .github/workflows/reusable-pip-compile.yml
+      - ".github/workflows/pip-compile-docs.yml"
+      - "tests/*.in"
+
+permissions:
+  pull-requests: write
+  contents: write
 
 jobs:
   refresh:
+    name: "Refresh docs build dependencies"
     uses: ./.github/workflows/reusable-pip-compile.yml
     with:
       message: "ci: refresh docs build dependencies"
       base-branch: "${{ inputs.base-branch || 'devel' }}"
       pr-branch: "${{ inputs.pr-branch || 'pip-compile/devel/docs' }}"
-      nox-args: -e pip-compile-3.10(requirements)
+      nox-args: "-e 'pip-compile-3.10(requirements)'"
       changed-files: "tests/*.txt"
