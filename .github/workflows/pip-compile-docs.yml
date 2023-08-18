@@ -37,3 +37,4 @@ jobs:
       pr-branch: "${{ inputs.pr-branch || 'pip-compile/devel/docs' }}"
       nox-args: "-e 'pip-compile-3.10(requirements)'"
       changed-files: "tests/*.txt"
+      reset-branch: "${{ inputs.reset-branch || false }}"

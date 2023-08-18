@@ -40,3 +40,4 @@ jobs:
         'pip-compile-3.10(typing)'
         'pip-compile-3.10(static)'
       changed-files: "tests/*.txt"
+      reset-branch: "${{ inputs.reset-branch || false }}"
