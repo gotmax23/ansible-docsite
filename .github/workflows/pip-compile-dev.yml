@@ -12,6 +12,9 @@ name: "Refresh dev dependencies"
       pr-branch:
         required: false
         type: string
+      reset-branch:
+        type: boolean
+        default: false
   push:
     branches:
       - devel

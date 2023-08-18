@@ -26,6 +26,10 @@ name: "Refresh pinned dependencies"
       changed-files:
         type: string
         required: true
+      # Reset branch
+      reset-branch:
+        type: boolean
+        default: false
   workflow_dispatch:
     # inputs: *inputs
     inputs:
@@ -44,6 +48,9 @@ name: "Refresh pinned dependencies"
       changed-files:
         type: string
         required: true
+      reset-branch:
+        type: boolean
+        default: false
 
 permissions:
   pull-requests: write
@@ -72,10 +79,12 @@ jobs:
       - name: "Use a branch named ${{ inputs.pr-branch }}"
         id: branch
         run: |
+          set -x
           if git branch -r | grep "origin/${{ inputs.pr-branch }}"; then
             echo "branch-exists=true" >> "${GITHUB_OUTPUT}"
             git switch "${{ inputs.pr-branch }}"
-            git rebase "${{ inputs.base-branch }}"
+            ${{ inputs.reset-branch && 'git reset --hard' || 'git rebase' }} \
+              "${{ inputs.base-branch }}"
           else
             echo "branch-exists=false" >> "${GITHUB_OUTPUT}"
             git switch -c "${{ inputs.pr-branch }}"
