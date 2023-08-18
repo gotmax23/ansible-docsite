@@ -14,7 +14,7 @@ cffi==1.15.1
     #   pynacl
 charset-normalizer==3.2.0
     # via requests
-click==8.1.6
+click==8.1.7
     # via typer
 codeowners==0.6.0
     # via -r tests/../hacking/pr_labeler/requirements.txt
