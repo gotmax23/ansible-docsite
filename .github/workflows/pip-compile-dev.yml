@@ -1,0 +1,27 @@
+---
+name: "Refresh dev dependencies"
+"on":
+  schedule:
+    # Weekly
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+    inputs:
+      base-branch:
+        required: false
+        type: string
+      pr-branch:
+        required: false
+        type: string
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/reusable-pip-compile.yml
+    with:
+      message: "ci: refresh devel dependencies"
+      base-branch: "${{ inputs.base-branch || 'devel' }}"
+      pr-branch: "${{ inputs.pr-branch || 'pip-compile/devel/dev' }}"
+      nox-args: >
+        -e pip-compile-3.10(formatters)
+           pip-compile-3.10(typing)
+           pip-compile-3.10(static)
+      changed-files: "tests/*.txt"
