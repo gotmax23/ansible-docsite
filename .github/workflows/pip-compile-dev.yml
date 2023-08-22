@@ -34,7 +34,7 @@ jobs:
     with:
       message: "ci: refresh dev dependencies"
       base-branch: "${{ inputs.base-branch || 'devel' }}"
-      pr-branch: "${{ inputs.pr-branch || 'pip-compile/devel/dev' }}"
+      pr-branch: "${{ inputs.pr-branch || format( 'pip-compile/{0}/dev', (inputs.base-branch || 'devel') ) }}"
       nox-args: >-
         -e 'pip-compile-3.10(formatters)'
         'pip-compile-3.10(typing)'
