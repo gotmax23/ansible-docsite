@@ -23,10 +23,6 @@ name: "Refresh dev dependencies"
       - ".github/workflows/pip-compile-dev.yml"
       - "tests/*.in"
 
-permissions:
-  pull-requests: write
-  contents: write
-
 jobs:
   refresh:
     name: "Refresh dev dependencies"
@@ -40,3 +36,4 @@ jobs:
         'pip-compile-3.10(typing)'
         'pip-compile-3.10(static)'
       reset-branch: "${{ inputs.reset-branch || false }}"
+    secrets: inherit
