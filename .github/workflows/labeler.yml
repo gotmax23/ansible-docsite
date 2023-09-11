@@ -51,11 +51,11 @@ jobs:
           event_json: "${{ toJSON(github.event) }}"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          ./venv/bin/python hacking/pr_labeler/label.py issue ${{ github.event.issue.number || inputs.number }}
+          ./venv/bin/python hacking/pr_labeler/label.py --owner gotmax23 issue ${{ github.event.issue.number || inputs.number }}
       - name: "Run the PR labeler"
         if: "github.event.pull_request || inputs.type == 'pr'"
         env:
           event_json: "${{ toJSON(github.event) }}"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          ./venv/bin/python hacking/pr_labeler/label.py pr ${{ github.event.number || inputs.number }}
+          ./venv/bin/python hacking/pr_labeler/label.py --owner gotmax23 pr ${{ github.event.number || inputs.number }}
