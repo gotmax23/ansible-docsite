@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 from glob import iglob
+import os
 from pathlib import Path
 
 import nox
@@ -26,6 +26,10 @@ def static(session: nox.Session):
     """
     Run static checkers
     """
+
+
+
+
     install(session, req="static")
     session.run("ruff", *session.posargs, *LINT_FILES)
 

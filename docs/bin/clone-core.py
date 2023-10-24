@@ -6,11 +6,11 @@ source tree to facilitate building docs.
 
 from __future__ import annotations
 
-import pathlib
 import shutil
-import subprocess
+import pathlib
 import sys
 import tempfile
+import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 
