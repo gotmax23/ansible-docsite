@@ -13,6 +13,7 @@ jobs:
         include:
           - session: static
             python-versions: "3.11"
+            extra-args: --output-format=github --select=ALL
           - session: formatters_check
             python-versions: "3.11"
           - session: typing
@@ -29,4 +30,4 @@ jobs:
           python-versions: "${{ matrix.python-versions }}"
       - name: "Run nox -e ${{ matrix.session }}"
         run: |
-          nox -e "${{ matrix.session }}"
+          nox -e "${{ matrix.session }}" ${{ matrix.extra-args }}
