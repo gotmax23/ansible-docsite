@@ -35,10 +35,76 @@ jobs:
       base-branch: "${{ inputs.base-branch || 'devel' }}"
       pr-branch: "${{ inputs.pr-branch || 'pip-compile/devel/dev' }}"
       nox-args: >-
+        -e 'pip-compile-3.11(formatters)'
+        'pip-compile-3.11(typing)'
+        'pip-compile-3.11(static)'
+        'pip-compile-3.11(spelling)'
+      reset-branch: "${{ inputs.reset-branch || false }}"
+      labels: "${{ inputs.labels || 'no_backport,tooling' }}"
+    secrets: inherit
+
+  # Additional jobs for stable branches. Only run when scheduled.
+  refresh_217:
+    name: "Refresh dev dependencies - 2.17"
+    uses: ./.github/workflows/reusable-pip-compile.yml
+    with:
+      message: "ci: refresh dev dependencies"
+      base-branch: "stable-2.17"
+      pr-branch: "pip-compile/stable-2.17/dev"
+      nox-args: >-
         -e 'pip-compile-3.10(formatters)'
         'pip-compile-3.10(typing)'
         'pip-compile-3.10(static)'
         'pip-compile-3.10(spelling)'
-      reset-branch: "${{ inputs.reset-branch || false }}"
-      labels: "${{ inputs.labels || 'backport-2.14,backport-2.15,backport-2.16,backport-2.17,tooling' }}"
+      reset-branch: false
+      labels: "tooling"
     secrets: inherit
+    if: ${{ github.event_name == 'schedule' }}
+  refresh_216:
+    name: "Refresh dev dependencies - 2.16"
+    uses: ./.github/workflows/reusable-pip-compile.yml
+    with:
+      message: "ci: refresh dev dependencies"
+      base-branch: "stable-2.16"
+      pr-branch: "pip-compile/stable-2.16/dev"
+      nox-args: >-
+        -e 'pip-compile-3.10(formatters)'
+        'pip-compile-3.10(typing)'
+        'pip-compile-3.10(static)'
+        'pip-compile-3.10(spelling)'
+      reset-branch: false
+      labels: "tooling"
+    secrets: inherit
+    if: ${{ github.event_name == 'schedule' }}
+  refresh_215:
+    name: "Refresh dev dependencies - 2.15"
+    uses: ./.github/workflows/reusable-pip-compile.yml
+    with:
+      message: "ci: refresh dev dependencies"
+      base-branch: "stable-2.15"
+      pr-branch: "pip-compile/stable-2.15/dev"
+      nox-args: >-
+        -e 'pip-compile-3.10(formatters)'
+        'pip-compile-3.10(typing)'
+        'pip-compile-3.10(static)'
+        'pip-compile-3.10(spelling)'
+      reset-branch: false
+      labels: "tooling"
+    secrets: inherit
+    if: ${{ github.event_name == 'schedule' }}
+  refresh_214:
+    name: "Refresh dev dependencies - 2.14"
+    uses: ./.github/workflows/reusable-pip-compile.yml
+    with:
+      message: "ci: refresh dev dependencies"
+      base-branch: "stable-2.14"
+      pr-branch: "pip-compile/stable-2.14/dev"
+      nox-args: >-
+        -e 'pip-compile-3.10(formatters)'
+        'pip-compile-3.10(typing)'
+        'pip-compile-3.10(static)'
+        'pip-compile-3.10(spelling)'
+      reset-branch: false
+      labels: "tooling"
+    secrets: inherit
+    if: ${{ github.event_name == 'schedule' }}
