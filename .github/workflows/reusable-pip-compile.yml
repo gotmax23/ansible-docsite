@@ -35,14 +35,13 @@ name: "Refresh pinned dependencies"
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    environment: github-bot
     steps:
       - name: Generate temp GITHUB_TOKEN
         id: create_token
         uses: tibdex/github-app-token@v2
         with:
           app_id: ${{ secrets.BOT_APP_ID }}
-          private_key: ${{ secrets.BOT_APP_KEY }}
+          private_key: ${{ secrets.BOT_APP_SECRET }}
       - name: Check out repo
         uses: actions/checkout@v4
         with:

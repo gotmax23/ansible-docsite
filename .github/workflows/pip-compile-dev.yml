@@ -59,7 +59,7 @@ jobs:
       reset-branch: false
       labels: "tooling"
     secrets: inherit
-    if: ${{ github.event_name == 'schedule' }}
+    # if: ${{ github.event_name == 'schedule' }}
   refresh_216:
     name: "Refresh dev dependencies - 2.16"
     uses: ./.github/workflows/reusable-pip-compile.yml
@@ -75,7 +75,7 @@ jobs:
       reset-branch: false
       labels: "tooling"
     secrets: inherit
-    if: ${{ github.event_name == 'schedule' }}
+    # if: ${{ github.event_name == 'schedule' }}
   refresh_215:
     name: "Refresh dev dependencies - 2.15"
     uses: ./.github/workflows/reusable-pip-compile.yml
@@ -91,7 +91,7 @@ jobs:
       reset-branch: false
       labels: "tooling"
     secrets: inherit
-    if: ${{ github.event_name == 'schedule' }}
+    # if: ${{ github.event_name == 'schedule' }}
   refresh_214:
     name: "Refresh dev dependencies - 2.14"
     uses: ./.github/workflows/reusable-pip-compile.yml
@@ -107,4 +107,4 @@ jobs:
       reset-branch: false
       labels: "tooling"
     secrets: inherit
-    if: ${{ github.event_name == 'schedule' }}
+    # if: ${{ github.event_name == 'schedule' }}
