@@ -16,6 +16,9 @@ on:
         description: Branch, tag, or commit SHA
         required: true
         default: devel
+      pull-request:
+        description: Pull request ID against which to run test build
+        type: number
       ansible-package-version:
         type: choice
         description: Ansible community package version
@@ -36,44 +39,83 @@ on:
         required: true
         default: test
         options:
+        # Production builds on RTD
         - production
+        # Test builds on Github Actions
         - test
+        # https://github.com/samuelcolvin/smokeshow
+        # Ephemeral CI builds using smokeshow for PRs
+        - smokeshow
 
 env:
   PACKAGE_VERSION: ${{ github.event.inputs.ansible-package-version || 'devel' }}
+  REPOSITORY_OWNER: "${{ inputs.repository-owner || github.repository_owner }}"
+  REPOSITORY_NAME: "${{ inputs.repository-name || github.repository }}"
+  REPOSITORY_BRANCH: "${{ inputs.repository-branch || 'devel' }}"
+  PULL_REQUEST: "${{ inputs.pull-request }}"
+
 
 jobs:
   build-package-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
+    - name: Get repo information
+      id: repoinfo
+      if: "inputs.pull-request"
+      uses: actions/github-script@v7
+      with:
+        script: |
+          let repositoryOwner = process.env.REPOSITORY_OWNER;
+          let repositoryName = process.env.REPOSITORY_NAME;
+          let repositoryBranch = process.env.REPOSITORY_BRANCH;
+          let pullRequest = process.env.PULL_REQUEST;
+
+          if (pullRequest) {
+            // Retrieve PR data
+            const {data: pullData} = await github.rest.pulls.get({
+              owner: repositoryOwner,
+              repo: repositoryName,
+              pull_number: pullRequest,
+            });
+            repositoryOwner = pullData.head.repo.owner.login;
+            repositoryName = pullData.head.repo.name;
+            repositoryBranch = pullData.head.sha;
+          }
+          core.setOutput("repository-owner", repositoryOwner);
+          core.setOutput("repository-name", repositoryName);
+          core.setOutput("repository-branch", repositoryBranch);
     - name: Checkout Ansible documentation
       uses: actions/checkout@v4
       with:
         repository: >-
           ${{
-            github.event.inputs.repository-owner || 'ansible'
+            steps.repoinfo.outputs.repository-owner
           }}/${{
-            github.event.inputs.repository-name || 'ansible-documentation'
+            steps.repoinfo.outputs.repository-name
           }}
-        ref: ${{ github.event.inputs.repository-branch || 'devel' }}
+        ref: ${{ steps.repoinfo.outputs.repository-branch }}
         path: build-directory
+        persist-credentials: false
 
-    - name: Setup nox
-      uses: wntrblm/nox@2024.04.15
+    # - name: Setup nox
+    #   uses: wntrblm/nox@2024.04.15
+    #
+    # - name: Output Python info
+    #   run: python --version --version && which python
 
-    - name: Output Python info
-      run: python --version --version && which python
-
-    - name: Graft ansible-core
-      run: nox -s clone-core
-      working-directory: build-directory
-
-    - name: Install project requirements
-      run: >-
-        python -m pip install
-        -r tests/requirements.in
-        -c tests/requirements.txt
-      working-directory: build-directory
+    # - name: Graft ansible-core
+    #   run: nox -s clone-core
+    #   working-directory: build-directory
+    #
+    # - name: Install project requirements
+    #   run: >-
+    #     python -m pip install
+    #     -r tests/requirements.in
+    #     -c tests/requirements.txt
+    #   working-directory: build-directory
 
     - name: Set the COLLECTION_LIST variable
       if: env.PACKAGE_VERSION != 'devel'
@@ -85,7 +127,10 @@ jobs:
       run: echo VERSION="${PACKAGE_VERSION}" >> "${GITHUB_ENV}"
 
     - name: Build the Ansible community package docs
-      run: make webdocs ANSIBLE_VERSION="${COLLECTION_LIST}"
+      # run: make webdocs ANSIBLE_VERSION="${COLLECTION_LIST}"
+      run: |
+        mkdir -p _build/html
+        echo "<h1>Hello world</h1>" > _build/html/index.html
       working-directory: build-directory/docs/docsite
 
     - name: Create a tarball with the build contents
@@ -119,10 +164,14 @@ jobs:
         echo "Publish to: ${{ github.event.inputs.deployment-environment }}" >> "${GITHUB_STEP_SUMMARY}"
         echo "Package version: ${{ github.event.inputs.ansible-package-version }}"  >> "${GITHUB_STEP_SUMMARY}"
         echo "Owner: ${{ github.event.inputs.repository-owner }}" >> "${GITHUB_STEP_SUMMARY}"
-        echo "Branch: ${{ github.event.inputs.repository-branch }}" >> "${GITHUB_STEP_SUMMARY}"
+        if [ -n "${PULL_REQUEST}" ]; then
+          echo "Branch: ${{ github.event.inputs.repository-branch }}" >> "${GITHUB_STEP_SUMMARY}"
+        else
+          echo "Pull request: https://github.com/${REPOSITORY_OWNER}/${REPOSITORY_NAME}/pull/${PULL_REQUEST}" >> "${GITHUB_STEP_SUMMARY}"
+        fi
 
   notify-build-failures:
-    if: failure()
+    if: "failure() && !inputs.pull-request"
     needs: build-package-docs
     runs-on: ubuntu-latest
     env:
@@ -146,6 +195,7 @@ jobs:
   deploy-package-docs:
     needs:
       - check-deploy
+    if: "inputs.deployment-environment != 'smokeshow'"
     runs-on: ubuntu-latest
     environment:
       name: deploy-package-docs
@@ -233,3 +283,48 @@ jobs:
     - name: Push build to deploy repository
       run: git push origin
       working-directory: deploy-directory
+
+  deploy-docs-smokeshow:
+    runs-on: ubuntu-latest
+    needs:
+      - check-deploy
+    environment: smokeshow
+    permissions:
+      statuses: write  # Smokeshow uses statuses API to show build in CI results
+      pull-requests: read  # Needed for API call in prinfo
+    steps:
+      - name: Setup UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Download the build archive
+        uses: actions/download-artifact@v4
+        with:
+          name: package-docs-build
+      - name: Extract the tarball
+        run: >-
+          tar -xvzf
+          ansible-package-docs-html-*.tar.gz
+          --one-top-level
+      - name: Get PR info
+        if: "inputs.pull-request"
+        id: prinfo
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {data: pullData} = await github.rest.pulls.get({
+              owner: process.env.REPOSITORY_OWNER,
+              repo: process.env.REPOSITORY_NAME,
+              pull_number: process.env.PULL_REQUEST,
+            });
+            core.setOutput("pr_head_sha", pullData.head.sha);
+      - name: Upload to smokeshow
+        run: |
+          uvx smokeshow upload ansible-package-docs-html-*/ | tee output
+          smokeshow_url="$(grep '^go to' output | sed -E 's|^go to (http.*)|\1|')"
+          echo "URL: ${smokeshow_url}" >> "${GITHUB_STEP_SUMMARY}"
+        env:
+          SMOKESHOW_GITHUB_STATUS_DESCRIPTION: Package docs build preview
+          SMOKESHOW_GITHUB_CONTEXT: package-docs-build
+          SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Smokeshow sets PR CI status with a link to the build if run from a PR
+          SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ steps.prinfo.outputs.pr_head_sha }}
+          SMOKESHOW_AUTH_KEY: ${{ secrets.SMOKESHOW_AUTH_KEY }}
