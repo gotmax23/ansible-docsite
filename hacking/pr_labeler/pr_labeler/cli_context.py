@@ -17,8 +17,11 @@ import github.PullRequest
 import github.Repository
 
 if TYPE_CHECKING:
+    from github.File import File
+    from github.PaginatedList import PaginatedList
     from typing_extensions import TypeAlias
 
+    from .config import TriagerConfig
     from .github_utils import IssueOrPr
 
 IssueOrPrCtx: TypeAlias = "IssueLabelerCtx | PRLabelerCtx"
@@ -43,6 +46,7 @@ class LabelerCtx:
     event_info: dict[str, Any]
     issue: github.Issue.Issue
     global_args: GlobalArgs
+    config: TriagerConfig
 
     TYPE: ClassVar[str]
 
@@ -97,3 +101,7 @@ class PRLabelerCtx(LabelerCtx):
     @property
     def event_member(self) -> dict[str, Any]:
         return self.event_info.get("pull_request", {})
+
+    @cached_property
+    def pr_files(self) -> PaginatedList[File]:
+        return self.pr.get_files()

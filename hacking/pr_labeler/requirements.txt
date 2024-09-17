@@ -1,4 +1,5 @@
 codeowners
 jinja2
+pydantic >2, <3
 pygithub
 typer-slim

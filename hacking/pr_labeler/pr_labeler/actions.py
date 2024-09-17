@@ -26,6 +26,7 @@ from .utils import log
 
 if TYPE_CHECKING:
     from .cli_context import IssueOrPrCtx, PRLabelerCtx
+    from .config import LabelFile
 
 
 def create_boilerplate_comment(ctx: IssueOrPrCtx, name: str, **kwargs) -> None:
@@ -67,13 +68,23 @@ def add_label_if_new(ctx: IssueOrPrCtx, labels: Collection[str] | str) -> None:
 def handle_codeowner_labels(ctx: PRLabelerCtx) -> None:
     labels = LABELS_BY_CODEOWNER.copy()
     owners = CodeOwners(CODEOWNERS)
-    files = ctx.pr.get_files()
+    files = ctx.pr_files
     for file in files:
         for owner in owners.of(file.filename):
             if labels_to_add := labels.pop(owner, None):
                 add_label_if_new(ctx, labels_to_add)
         if not labels:
             return
+
+
+def handle_labels(ctx: PRLabelerCtx) -> None:
+    """
+    Apply labels from the label_files config
+    """
+    labels = ctx.config.pulls.label_files
+    for file in ctx.pr.get_files():
+        for label in labels:
+            pass
 
 
 def new_contributor_welcome(ctx: IssueOrPrCtx) -> None:
