@@ -4,6 +4,7 @@ import os
 import shlex
 import shutil
 from argparse import ArgumentParser, BooleanOptionalAction
+from contextlib import suppress
 from glob import iglob
 from pathlib import Path
 from typing import cast
@@ -157,10 +158,7 @@ requirements_files = list(
 @nox.session(name="pip-compile", python=["3.11"])
 @nox.parametrize(["req"], requirements_files, requirements_files)
 def pip_compile(session: nox.Session, req: str):
-    # .pip-tools.toml was introduced in v7
-    # pip 24.3 causes a regression in pip-compile.
-    # See https://github.com/jazzband/pip-tools/issues/2131.
-    session.install("pip-tools >= 7", "pip < 24.3")
+    install(session, req="pip-compile")
 
     # Use --upgrade by default unless a user passes -P.
     args = list(session.posargs)
@@ -175,10 +173,16 @@ def pip_compile(session: nox.Session, req: str):
         arg.startswith(("-P", "--upgrade-package", "--no-upgrade")) for arg in args
     ):
         args.append("--upgrade")
+    # Use "--no-upgrade" as a signal for our noxfile to not pass --upgrade, but
+    # don't pass it on to uv. It doesn't support it.
+    with suppress(ValueError):
+        args.remove("--no-upgrade")
 
     # fmt: off
     session.run(
-        "pip-compile",
+        "uv", "pip", "compile",
+        "--universal",
+        "--quiet",
         "--output-file", f"tests/{req}.txt",
         *args,
         f"tests/{req}.in",
