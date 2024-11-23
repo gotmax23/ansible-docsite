@@ -158,23 +158,34 @@ requirements_files = list(
 @nox.session(name="pip-compile", python=["3.11"])
 @nox.parametrize(["req"], requirements_files, requirements_files)
 def pip_compile(session: nox.Session, req: str):
+    """
+    Update dependency lockfiles in tests/ directory with uv pip compile.
+    In addition to the usual flags supported by uv pip compile,
+    this nox session implements two custom custom flags:
+
+        --no-upgrade
+            By default, the noxfile passes --upgrade to uv pip compile which
+            updates all package versions in the lockfiles.
+            Pass --no-upgrade to keep existing package versions as they are and
+            only make the most minimal changes to sync the lockfiles with the input
+            (.in) files.
+        --check
+            Run uv pip compile without --upgrade and fail if any changes were made.
+            This ensures the lockfiles are in sync with the input files.
+    """
     install(session, req="pip-compile")
 
-    # Use --upgrade by default unless a user passes -P.
     args = list(session.posargs)
-
-    # Support a custom --check flag to fail if pip-compile made any changes
-    # so we can check that that lockfiles are in sync with the input (.in) files.
     check_mode = "--check" in args
     if check_mode:
-        # Remove from args, as pip-compile doesn't actually support --check.
+        # Remove from args, as pip compile doesn't actually support --check.
         args.remove("--check")
     elif not any(
         arg.startswith(("-P", "--upgrade-package", "--no-upgrade")) for arg in args
     ):
+        # Use --upgrade by default unless the user passes a conflicting flag.
         args.append("--upgrade")
-    # Use "--no-upgrade" as a signal for our noxfile to not pass --upgrade, but
-    # don't pass it on to uv. It doesn't support it.
+    # Like --check, also remove --no-upgrade from args if it's present.
     with suppress(ValueError):
         args.remove("--no-upgrade")
 
